@@ -132,7 +132,7 @@ class PublisherAjaxTest(JsonRenderingTest):
         self.papers = map(Paper.create_by_doi,
                           ['10.1038/526052a', '10.1038/nchem.1829', '10.1038/nchem.1365'])
         self.publisher = self.papers[0].publications[0].publisher
-        self.assertEqual(self.publisher.name, 'Nature Publishing Group')
+        self.assertEqual(self.publisher.name, 'Nature Research')
 
     def test_logged_out(self):
         self.client.logout()

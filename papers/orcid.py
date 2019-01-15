@@ -154,7 +154,7 @@ class OrcidProfile(object):
             self.json = parsed
         except (requests.exceptions.HTTPError, ValueError):
             raise MetadataSourceException(
-                'The ORCiD {id} could not be found'.format(id=self.id))
+                'The ORCiD {id} could not be found from {instance}'.format(id=self.id, instance=self.instance))
         except TypeError:
             raise MetadataSourceException(
                 'The ORCiD {id} returned invalid JSON.'.format(id=self.id))
