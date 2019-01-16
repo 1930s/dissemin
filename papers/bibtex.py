@@ -50,7 +50,7 @@ def parse_bibtex(bibtex):
 
 ### Bibtex utilites ###
 
-bibtex_header_no_newline = re.compile(r'^(@\w*\W*{\W*\w+\W*,) *(?=[a-z])')
+bibtex_header_no_newline = re.compile(r'^(@\w*\W*{\W*[^,{]+\W*,) *(?=[a-z])')
 bibtex_statement_no_newline = re.compile(r'(},) *([a-zA-Z]+\W*=\W*{)')
 bibtex_end_no_newline = re.compile(r'} *,? *} *$')
 

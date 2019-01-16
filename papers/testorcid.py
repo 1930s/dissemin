@@ -22,22 +22,28 @@
 from __future__ import unicode_literals
 
 import unittest
+import json
+import mock
 
 from papers.orcid import OrcidProfile
 from papers.orcid import OrcidWorkSummary
 
 class OrcidProfileTest(unittest.TestCase):
-    """
-    TODO: duplicate all these profiles to the ORCID sandbox
-    to be sure they will not be modified!
-    """
+    
+    @classmethod
+    def loadProfile(cls, id):
+        with open('papers/fixtures/orcid/{}.json'.format(id)) as f:
+            return OrcidProfile(
+                orcid_id=id,
+                json=json.loads(f.read()),
+                instance='orcid.org')
 
     @classmethod
     def setUpClass(self):
-        self.antonin = OrcidProfile(orcid_id='0000-0002-8612-8827')
-        self.thomas = OrcidProfile(orcid_id='0000-0003-0524-631X')
-        self.sergey = OrcidProfile(orcid_id='0000-0003-3397-9895')
-        self.marco = OrcidProfile(orcid_id='0000-0002-6561-5642')
+        self.antonin = self.loadProfile(id='0000-0002-8612-8827')
+        self.thomas = self.loadProfile(id='0000-0003-0524-631X')
+        self.sergey = self.loadProfile(id='0000-0003-3397-9895')
+        self.marco = self.loadProfile(id='0000-0002-6561-5642')
 
     def test_simple_name(self):
         self.assertEqual(self.antonin.name, ('Antonin', 'Delpeuch'))
@@ -46,12 +52,10 @@ class OrcidProfileTest(unittest.TestCase):
 
     def test_credit_name(self):
         self.assertEqual(self.sergey.name, ('Sergey M.', 'Natanzon'))
-        self.assertEqual(OrcidProfile(
-            orcid_id='0000-0001-9547-293X').name, ('Darío', 'Álvarez'))
+        self.assertEqual(self.loadProfile(id='0000-0001-9547-293X').name, ('Darío', 'Álvarez'))
 
     def test_empty_lastname(self):
-        self.assertEqual(OrcidProfile(
-            orcid_id='0000-0001-5006-3868').name, ('Qiang', ''))
+        self.assertEqual(self.loadProfile(id='0000-0001-5006-3868').name, ('Qiang', ''))
 
     def test_other_names(self):
         self.assertEqual(set(self.sergey.other_names),
@@ -59,8 +63,8 @@ class OrcidProfileTest(unittest.TestCase):
                               ('S. M.', 'Natanzon'), ('Sergey', 'Natanzon')]))
 
     def test_homepage_without_http(self):
-        self.assertEqual(OrcidProfile(
-            orcid_id='0000-0002-5710-3989').homepage, 'http://evrard.perso.enseeiht.fr')
+        self.assertEqual(self.loadProfile(
+            id='0000-0002-5710-3989').homepage, 'http://evrard.perso.enseeiht.fr')
 
     def test_iterable(self):
         for key in self.thomas:
@@ -79,29 +83,22 @@ class OrcidProfileTest(unittest.TestCase):
         self.assertEqual(OrcidProfile(
             orcid_id='0000-0002-5654-4053').name, ('Peter', 'Lieth'))
 
-    def test_search(self):
-        # for this one we use the production database
-        # because test profiles on the sandbox
-        # tend to get deleted quite often
-        results = list(OrcidProfile.search_by_name('John', 'Doe'))
-        self.assertTrue(all(map(lambda x: len(x['orcid']) and (
-            len(x['first']) or len(x['last'])), results)))
-        names_returned = map(lambda x: (x['first'], x['last']), results)
-        self.assertTrue(('John', 'Doe') in names_returned)
-
     def test_institution(self):
-        self.assertEqual(OrcidProfile(
-            orcid_id='0000-0002-0022-2290').institution,
+        self.assertEqual(self.loadProfile(
+            id='0000-0002-0022-2290').institution,
             {'name':'Ecole Normale Superieure',
              'identifier':None,
              'country':'FR'})
-        self.assertEqual(OrcidProfile(
-            orcid_id='0000-0002-5654-4053').institution,
+        self.assertEqual(self.loadProfile(
+            id='0000-0002-5654-4053').institution,
             {'country': 'FR',
              'identifier': None,
              'name': "École nationale supérieure de céramique industrielle"})
 
     def test_work_summaries(self):
+        with open('papers/fixtures/orcid/'+self.antonin.id+'-works.json', 'r') as f:
+            response = json.load(f)
+        self.antonin.request_element = mock.MagicMock(return_value=response)
         summaries = self.antonin.work_summaries
         dois = [summary.doi for summary in summaries]
         titles = [summary.title for summary in summaries]
@@ -110,7 +107,11 @@ class OrcidProfileTest(unittest.TestCase):
         self.assertTrue(None not in [summary.put_code for summary in summaries])
 
     def test_philipp(self):
-        p = OrcidProfile(orcid_id='0000-0001-6723-6833')
+        p = self.loadProfile(id='0000-0001-6723-6833')
+        with open('papers/fixtures/orcid/'+p.id+'-works.json', 'r') as f:
+            response = json.load(f)
+        self.antonin.request_element = mock.MagicMock(return_value=response)
+        
         summaries = p.work_summaries
         dois = [summary.doi for summary in summaries]
         self.assertTrue('10.3354/meps09890' in dois)
@@ -256,8 +257,17 @@ class OrcidProfileTest(unittest.TestCase):
         self.assertEqual(summary.doi, '10.3354/meps09890')
 
     def test_works(self):
+        with open('papers/fixtures/orcid/'+self.antonin.id+'-works.json', 'r') as f:
+            response = json.load(f)
+        self.antonin.request_element = mock.MagicMock(return_value=response)
+        
         summaries = self.antonin.work_summaries
         put_codes = [s.put_code for s in summaries]
+        
+        with open('papers/fixtures/orcid/'+self.antonin.id+'-full-works.json', 'r') as f:
+            response = json.load(f)
+        self.antonin.request_element = mock.MagicMock(return_value=response)
+        
         works = list(self.antonin.fetch_works(put_codes))
         titles = [work.title for work in works]
         self.assertTrue('Complexity of Grammar Induction for Quantum Types' in titles)
