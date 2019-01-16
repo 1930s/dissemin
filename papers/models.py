@@ -129,7 +129,7 @@ class Institution(models.Model):
     coords = PointField(null=True, blank=True)
 
     #: :py:class:`AccessStatistics` about the papers authored in this institution.
-    stats = models.ForeignKey(AccessStatistics, null=True, blank=True)
+    stats = models.ForeignKey(AccessStatistics, null=True, blank=True, on_delete=models.CASCADE)
 
     @property
     def sorted_departments(self):
@@ -290,10 +290,10 @@ class Department(models.Model):
     #: The full name of the department
     name = models.CharField(max_length=300)
     #: The institution it belongs to
-    institution = models.ForeignKey(Institution)
+    institution = models.ForeignKey(Institution, on_delete=models.CASCADE)
 
     #: :py:class:`AccessStatistics` about the papers authored in this department
-    stats = models.ForeignKey(AccessStatistics, null=True, blank=True)
+    stats = models.ForeignKey(AccessStatistics, null=True, blank=True, on_delete=models.CASCADE)
 
     @property
     def sorted_researchers(self):
@@ -338,9 +338,9 @@ class NameVariant(models.Model):
     """
 
     #: The :py:class:`Name` that is part of the relation
-    name = models.ForeignKey('Name')
+    name = models.ForeignKey('Name', on_delete=models.CASCADE)
     #: The :py:class:`Researcher` to which the name is attributed
-    researcher = models.ForeignKey('Researcher')
+    researcher = models.ForeignKey('Researcher', on_delete=models.CASCADE)
     #: The similarity score between this name and one of the reference names for this researcher
     confidence = models.FloatField(default=1.)
 
@@ -354,9 +354,9 @@ class Researcher(models.Model):
     """
 
     #: The preferred :py:class:`Name` for this researcher
-    name = models.ForeignKey('Name')
+    name = models.ForeignKey('Name', on_delete=models.CASCADE)
     #: It can be associated to a user
-    user = models.ForeignKey(User, null=True, blank=True)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     #: It can be affiliated to a department
     department = models.ForeignKey(Department, null=True, blank=True,
                                 on_delete=models.SET_NULL)
@@ -386,7 +386,7 @@ class Researcher(models.Model):
         max_length=64, choices=HARVESTER_TASK_CHOICES, null=True, blank=True)
 
     #: Statistics of papers authored by this researcher
-    stats = models.ForeignKey(AccessStatistics, null=True, blank=True)
+    stats = models.ForeignKey(AccessStatistics, null=True, blank=True, on_delete=models.CASCADE)
 
     #: Should we hide the profile for this researcher?
     visible = models.BooleanField(default=True)
@@ -1346,8 +1346,8 @@ class OaiSource(CachingMixin, models.Model):
 
 
 class OaiRecord(models.Model, BareOaiRecord):
-    source = models.ForeignKey(OaiSource)
-    about = models.ForeignKey(Paper)
+    source = models.ForeignKey(OaiSource, on_delete=models.CASCADE)
+    about = models.ForeignKey(Paper, on_delete=models.CASCADE)
 
     identifier = models.CharField(max_length=512, unique=True)
     splash_url = models.URLField(max_length=1024, null=True, blank=True)
@@ -1361,9 +1361,9 @@ class OaiRecord(models.Model, BareOaiRecord):
     # this is actually the *journal* title
     journal_title = models.CharField(max_length=512, blank=True, null=True)
     container = models.CharField(max_length=512, blank=True, null=True)
-    journal = models.ForeignKey(Journal, blank=True, null=True)
+    journal = models.ForeignKey(Journal, blank=True, null=True, on_delete=models.CASCADE)
 
-    publisher = models.ForeignKey(Publisher, blank=True, null=True)
+    publisher = models.ForeignKey(Publisher, blank=True, null=True, on_delete=models.CASCADE)
     publisher_name = models.CharField(max_length=512, blank=True, null=True)
 
     issue = models.CharField(max_length=64, blank=True, null=True)
