@@ -23,20 +23,26 @@ from __future__ import unicode_literals
 
 import unittest
 import json
-import mock
 
 from papers.orcid import OrcidProfile
 from papers.orcid import OrcidWorkSummary
+
+class OrcidProfileStub(OrcidProfile):
+    def __init__(self, orcid_id, instance='orcid.org'):
+        super(OrcidProfileStub, self).__init__(orcid_id=orcid_id, instance=instance,
+              json=json.load(open('papers/fixtures/orcid/{}.json'.format(orcid_id))))
+        
+    def request_element(self, path):
+        full_path = 'papers/fixtures/orcid/{}-{}.json'.format(self.id, path.replace('/','-'))
+        with open(full_path, 'r') as f:
+            response = json.load(f)
+        return response
 
 class OrcidProfileTest(unittest.TestCase):
     
     @classmethod
     def loadProfile(cls, id):
-        with open('papers/fixtures/orcid/{}.json'.format(id)) as f:
-            return OrcidProfile(
-                orcid_id=id,
-                json=json.loads(f.read()),
-                instance='orcid.org')
+        return OrcidProfileStub(id)
 
     @classmethod
     def setUpClass(self):
@@ -96,9 +102,6 @@ class OrcidProfileTest(unittest.TestCase):
              'name': "École nationale supérieure de céramique industrielle"})
 
     def test_work_summaries(self):
-        with open('papers/fixtures/orcid/'+self.antonin.id+'-works.json', 'r') as f:
-            response = json.load(f)
-        self.antonin.request_element = mock.MagicMock(return_value=response)
         summaries = self.antonin.work_summaries
         dois = [summary.doi for summary in summaries]
         titles = [summary.title for summary in summaries]
@@ -108,9 +111,6 @@ class OrcidProfileTest(unittest.TestCase):
 
     def test_philipp(self):
         p = self.loadProfile(id='0000-0001-6723-6833')
-        with open('papers/fixtures/orcid/'+p.id+'-works.json', 'r') as f:
-            response = json.load(f)
-        self.antonin.request_element = mock.MagicMock(return_value=response)
         
         summaries = p.work_summaries
         dois = [summary.doi for summary in summaries]
@@ -257,17 +257,8 @@ class OrcidProfileTest(unittest.TestCase):
         self.assertEqual(summary.doi, '10.3354/meps09890')
 
     def test_works(self):
-        with open('papers/fixtures/orcid/'+self.antonin.id+'-works.json', 'r') as f:
-            response = json.load(f)
-        self.antonin.request_element = mock.MagicMock(return_value=response)
-        
         summaries = self.antonin.work_summaries
         put_codes = [s.put_code for s in summaries]
-        
-        with open('papers/fixtures/orcid/'+self.antonin.id+'-full-works.json', 'r') as f:
-            response = json.load(f)
-        self.antonin.request_element = mock.MagicMock(return_value=response)
-        
         works = list(self.antonin.fetch_works(put_codes))
         titles = [work.title for work in works]
         self.assertTrue('Complexity of Grammar Induction for Quantum Types' in titles)
