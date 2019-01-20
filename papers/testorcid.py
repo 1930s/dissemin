@@ -23,6 +23,7 @@ from __future__ import unicode_literals
 
 import unittest
 import json
+import requests
 
 from papers.orcid import OrcidProfile
 from papers.orcid import OrcidWorkSummary
@@ -30,13 +31,28 @@ from papers.orcid import OrcidWorkSummary
 class OrcidProfileStub(OrcidProfile):
     def __init__(self, orcid_id, instance='orcid.org'):
         super(OrcidProfileStub, self).__init__(orcid_id=orcid_id, instance=instance,
-              json=json.load(open('papers/fixtures/orcid/{}.json'.format(orcid_id))))
+              json=self.request_or_load(orcid_id, instance))
+        
+    @classmethod
+    def request_or_load(cls, path, instance):
+        url = 'https://pub.{instance}/v2.1/{path}'.format(instance=instance, path=path)
+        full_path = 'papers/fixtures/orcid/{}.json'.format(path.replace('/','-'))
+        try:
+            with open(full_path, 'r') as f:
+                response = json.load(f)
+            return response
+        except Exception as e:
+            print(e)
+            r = requests.get(url,headers={'Accept':'application/json'})
+            j = r.json()
+            print(r.json())
+            with open(full_path, 'w') as f:
+                f.write(json.dumps(j))
+            return j
+
         
     def request_element(self, path):
-        full_path = 'papers/fixtures/orcid/{}-{}.json'.format(self.id, path.replace('/','-'))
-        with open(full_path, 'r') as f:
-            response = json.load(f)
-        return response
+        return self.request_or_load(self.id + '/'+ path, self.instance)
 
 class OrcidProfileTest(unittest.TestCase):
     

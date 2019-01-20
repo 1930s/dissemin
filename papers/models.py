@@ -502,7 +502,7 @@ class Researcher(models.Model):
 
         if profile is None:
             profile = OrcidProfile(orcid_id=orcid, instance=instance)
-        else:
+        elif type(profile) == dict:
             profile = OrcidProfile(json=profile)
         name = profile.name
         homepage = profile.homepage

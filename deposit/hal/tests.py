@@ -72,6 +72,7 @@ hal-preprod. Feel free to reactivate once this has been solved.
 """)
 class HALProtocolTest(ProtocolTest):
 
+    @classmethod
     def setUpClass(self):
         super(HALProtocolTest, self).setUpClass()
         self.repo.username = 'test_ws'
