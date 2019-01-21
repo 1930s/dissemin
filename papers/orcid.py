@@ -23,13 +23,10 @@ from __future__ import unicode_literals
 import requests
 
 from django.conf import settings
-from django.utils.http import urlencode
 from django.utils.functional import cached_property
-from lxml import etree
 from papers.errors import MetadataSourceException
 from papers.name import normalize_name_words
 from papers.name import parse_comma_name
-from papers.name import shallower_name_similarity
 from papers.name import most_similar_author
 from papers.utils import jpath
 from papers.utils import urlize
