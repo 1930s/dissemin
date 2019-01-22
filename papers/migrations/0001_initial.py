@@ -376,7 +376,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='annotation',
             name='paper',
-            field=models.ForeignKey(to='papers.Paper'),
+            field=models.ForeignKey(to='papers.Paper', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
